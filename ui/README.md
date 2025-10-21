@@ -1,41 +1,35 @@
-# Quasar App (quasar-project)
+# Second Striker UI
 
-A Quasar Project
+This is the frontend for the Second Striker application. It is a [Quasar](https://quasar.dev/) application that uses [Vue.js](https://vuejs.org/).
 
-## Install the dependencies
-```bash
-yarn
-# or
-npm install
-```
+## Architecture
 
-### Start the app in development mode (hot-code reloading, error reporting, etc.)
-```bash
-quasar dev
-```
+The UI is built using the Quasar framework, which provides a set of reusable UI components and a consistent development experience. The application is organized into a series of pages, which are located in the `src/pages` directory.
 
+## Features
 
-### Lint the files
-```bash
-yarn lint
-# or
-npm run lint
-```
+*   **User authentication:** Users can register, log in, and manage their profiles.
+*   **Wallet:** Users can deposit and withdraw money from their wallets using M-Pesa.
+*   **Leagues:** Users can create, join, and manage leagues.
+*   **Tournaments:** Users can create, join, and manage tournaments.
+*   **Matches:** Users can view and manage their matches.
 
+## Installation
 
-### Format the files
-```bash
-yarn format
-# or
-npm run format
-```
+1.  Clone the repository.
+2.  Install the dependencies:
+    ```bash
+    npm install
+    ```
+3.  Start the development server:
+    ```bash
+    quasar dev
+    ```
 
+## Building for production
 
+To build the application for production, run the following command:
 
-### Build the app for production
 ```bash
 quasar build
 ```
-
-### Customize the configuration
-See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).
