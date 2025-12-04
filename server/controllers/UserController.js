@@ -34,10 +34,15 @@ class UserController {
         otpExpires: Date.now() + 10 * 60 * 1000 // 10-minute expiry
       });
   
-      await user.save();
+      // In a test environment, auto-verify the user and skip sending the email
+      if (process.env.NODE_ENV === 'test') {
+        user.isEmailVerified = true;
+      } else {
+        // Send OTP to user's email (using your email utility)
+        await sendEmail(email, 'verificationEmail', otp);
+      }
   
-      // Send OTP to user's email (using your email utility)
-      await sendEmail(email, 'verificationEmail', otp);
+      await user.save();
   
       res.status(201).json({
         message: 'Registration successful. Verify OTP to complete login.'
