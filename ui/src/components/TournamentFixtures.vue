@@ -198,33 +198,60 @@
 
 <script setup>
 import { ref, onMounted, computed, defineEmits } from 'vue'
+import { useQuasar } from 'quasar'
 import { api } from 'boot/axios'
 
+/* -----------------------
+   REQUIRED FIXED IMPORTS
+-------------------------*/
+const $q = useQuasar()
+
+/* -----------------------
+   PROPS
+-------------------------*/
 const props = defineProps({
-  competitionId: {
-    type: String,
-    required: true
-  },
-  isAdmin: {
-    type: Boolean,
-    required: true,
-  },
-  stage: {
-    type: String,
-    required: true
-  },
+  competitionId: { type: String, required: true },
+  isAdmin: { type: Boolean, required: true },
+  stage: { type: String, required: true }
 })
 
+/* -----------------------
+   STATE
+-------------------------*/
 const fixtures = ref([])
 const knockoutFixtures = ref([])
 const loading = ref(true)
 const currentRound = ref(1)
-const emit = defineEmits(['tournament-started']);
+const emit = defineEmits(['tournament-started'])
 
+/* -----------------------
+   ADDED: winnerInfo
+-------------------------*/
+const winnerInfo = ref({
+  winner: '',
+  firstPlacePrize: 0,
+  runnerUp: '',
+  secondPlacePrize: 0
+})
+
+/* -----------------------
+   ADDED: formatCurrency
+-------------------------*/
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(amount || 0)
+}
+
+/* -----------------------
+   FETCH FIXTURES
+-------------------------*/
 async function fetchFixtures() {
   try {
     const response = await api.get(`/tournament/${props.competitionId}/fixtures`)
-    fixtures.value = response.data;
+    fixtures.value = response.data
+
     const playedFixtures = fixtures.value.filter(f => f.completed)
     if (playedFixtures.length > 0) {
       currentRound.value = Math.max(...playedFixtures.map(f => f.round))
@@ -238,80 +265,69 @@ async function fetchFixtures() {
 
 async function fetchKnockoutFixtures() {
   try {
-    const response = await api.get(`/tournament/${props.competitionId}/knockoutFixtures`);
-    knockoutFixtures.value = response.data.filter(fixture => fixture.team1 && fixture.team2);
+    const response = await api.get(`/tournament/${props.competitionId}/knockoutFixtures`)
+    knockoutFixtures.value = response.data.filter(f => f.team1 && f.team2)
   } catch (error) {
-    console.error('Error fetching knockout fixtures:', error);
+    console.error('Error fetching knockout fixtures:', error)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
+/* -----------------------
+   COMPUTED
+-------------------------*/
 const groupedFixtures = computed(() => {
   return fixtures.value.reduce((groups, fixture) => {
-    const round = fixture.round
-    if (!groups[round]) {
-      groups[round] = []
-    }
-    groups[round].push(fixture)
+    if (!groups[fixture.round]) groups[fixture.round] = []
+    groups[fixture.round].push(fixture)
     return groups
   }, {})
-
 })
 
 const groupedKnockoutFixtures = computed(() => {
   return knockoutFixtures.value.reduce((groups, fixture) => {
-    if (!fixture.team1 || !fixture.team2);
+    const round = fixture.round.toLowerCase()
+    const isReverse = round.includes("reverse")
+    const baseRound = isReverse ? round.replace("reverse", "").trim() : round
 
-    const round = fixture.round.toLowerCase(); // Normalize casing
-    const isReverse = round.includes("reverse"); // Check if it's a reverse leg
-    const baseRound = isReverse ? round.replace("reverse", "").trim() : round; // Remove "reverse" for grouping
+    if (!groups[baseRound]) groups[baseRound] = { leg1: [], leg2: [] }
+    isReverse ? groups[baseRound].leg2.push(fixture) : groups[baseRound].leg1.push(fixture)
 
-    // Ensure the group exists
-    if (!groups[baseRound]) {
-      groups[baseRound] = { leg1: [], leg2: [] };
-    }
+    return groups
+  }, {})
+})
 
-    // Sort into Leg 1 or Leg 2
-    if (isReverse) {
-      groups[baseRound].leg2.push(fixture);
-    } else {
-      groups[baseRound].leg1.push(fixture);
-    }
-
-    return groups;
-  }, {});
-});
-
+/* -----------------------
+   SCORE VALIDATION
+-------------------------*/
 function validateScore(value, fixture, field) {
-  // Remove any non-numeric characters
-  const cleanValue = value.replace(/[^0-9]/g, '')
-  // Convert to number and validate
-  const numValue = parseInt(cleanValue)
-  if (isNaN(numValue)) {
-    fixture[field] = ''
-  } else {
-    fixture[field] = numValue
-  }
+  const numValue = parseInt(String(value).replace(/[^0-9]/g, ''))
+  fixture.result[field] = isNaN(numValue) ? '' : numValue
 }
 
 function isScoreValid(fixture) {
-  return fixture.team1Score !== undefined &&
-         fixture.team2Score !== undefined &&
-         !isNaN(fixture.team1Score) &&
-         !isNaN(fixture.team2Score)
+  return (
+    fixture.result.team1Score !== '' &&
+    fixture.result.team2Score !== '' &&
+    !isNaN(fixture.result.team1Score) &&
+    !isNaN(fixture.result.team2Score)
+  )
 }
 
+/* -----------------------
+   UPDATE GROUP FIXTURE
+-------------------------*/
 async function updateFixtureResult(fixture) {
   try {
     loading.value = true
     await api.put(`/tournament/${props.competitionId}/updateFixtures/${fixture._id}`, {
-      team1Score: fixture.team1Score,
-      team2Score: fixture.team2Score,
+      team1Score: fixture.result.team1Score,
+      team2Score: fixture.result.team2Score
     })
 
-    await fetchFixtures();
-    await checkIfAllFixturesCompleted();
+    await fetchFixtures()
+    await checkIfAllFixturesCompleted()
 
   } catch (error) {
     console.error('Error saving fixture result:', error)
@@ -320,6 +336,9 @@ async function updateFixtureResult(fixture) {
   }
 }
 
+/* -----------------------
+   NOTIFICATION FIXED
+-------------------------*/
 const showCompletionBanner = () => {
   $q.notify({
     type: 'positive',
@@ -334,100 +353,115 @@ const showCompletionBanner = () => {
       <div class="text-subtitle2">Runner Up: ${winnerInfo.value.runnerUp}</div>
       <div class="text-caption">Prize: ${formatCurrency(winnerInfo.value.secondPlacePrize)}</div>
     `
-  });
-};
+  })
+}
 
+/* -----------------------
+   UPDATE KNOCKOUT FIXTURE
+-------------------------*/
 const knockoutFixtureUpdate = async (fixture) => {
-  if (!isScoreValid(fixture)) return;
-  try {
-    loading.value = true;
+  if (!isScoreValid(fixture)) return
 
-    // If it's the final match, directly use finishTournament with the scores
-    if (fixture.round === 'final') {
+  try {
+    loading.value = true
+
+    // FINAL MATCH
+    if (fixture.round.toLowerCase() === 'final') {
       const fixtureDetails = {
         fixtureId: fixture._id,
         team1Score: fixture.result.team1Score,
         team2Score: fixture.result.team2Score
-      };
-      const winnerData = await finishTournament(fixtureDetails); // Get winner data from the finish tournament API
-      await fetchKnockoutFixtures();
+      }
 
-      // Show completion banner after tournament is finished
+      const winnerData = await finishTournament(fixtureDetails)
+      await fetchKnockoutFixtures()
+
       if (winnerData) {
         winnerInfo.value = {
           winner: winnerData.winner,
           firstPlacePrize: winnerData.firstPlacePrize,
-          runnerUp: winnerData.runnerUp || '',  // Only show runner-up if available
-          secondPlacePrize: winnerData.secondPlacePrize || 0 // Default to 0 if not available
-        };
-        showCompletionBanner();  // Display the completion banner
+          runnerUp: winnerData.runnerUp || '',
+          secondPlacePrize: winnerData.secondPlacePrize || 0
+        }
+        showCompletionBanner()
       }
-      return;
+
+      return
     }
 
-    // For non-final matches, proceed with normal update
+    // NORMAL MATCH
     await api.put(`/tournament/${props.competitionId}/updateKnockoutFixtures/${fixture._id}`, {
       team1Score: fixture.result.team1Score,
       team2Score: fixture.result.team2Score
-    });
+    })
 
-    await fetchKnockoutFixtures();
+    await fetchKnockoutFixtures()
+
   } catch (error) {
-    console.error('Error updating fixture:', error);
+    console.error('Error updating fixture:', error)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
+/* -----------------------
+   FINISH TOURNAMENT
+-------------------------*/
 async function finishTournament(fixtureDetails) {
   try {
-    const response = await api.post(`tournament/${props.competitionId}/finish`, fixtureDetails);
-    console.log('Tournament finished successfully');
-
-    // Return the winner and runner-up data from the API response
-    return response.data;  // Assuming the API returns { winner, runnerUp, firstPlacePrize, secondPlacePrize }
+    const response = await api.post(`tournament/${props.competitionId}/finish`, fixtureDetails)
+    return response.data
   } catch (error) {
-    console.error('Error finishing tournament:', error);
-    return null; // Return null in case of an error
+    console.error('Error finishing tournament:', error)
+    return null
   }
 }
 
+/* -----------------------
+   CHECK GROUP COMPLETION
+-------------------------*/
 async function checkIfAllFixturesCompleted() {
   try {
-    const response = await api.get(`/tournament/${props.competitionId}/fixturesComplete`);
+    const response = await api.get(`/tournament/${props.competitionId}/fixturesComplete`)
 
-    if (response.data.message === 'All group stage fixtures are completed'&&
-    props.stage === 'groupStage'
+    if (
+      response.data.message === 'All group stage fixtures are completed' &&
+      props.stage === 'groupStage'
     ) {
-      await startKnockoutStages();
-      await fetchKnockoutFixtures();
+      await startKnockoutStages()
+      await fetchKnockoutFixtures()
     }
   } catch (error) {
-    console.error('Error checking fixtures:', error);
+    console.error('Error checking fixtures:', error)
   }
 }
 
-// Function to start knockout stages
+/* -----------------------
+   START KNOCKOUT STAGE
+-------------------------*/
 async function startKnockoutStages() {
   try {
-    // Make an API request to start the knockout stages
-    const response = await api.post(`/tournament/${props.competitionId}/startKnockout`);
+    const response = await api.post(`/tournament/${props.competitionId}/startKnockout`)
 
     if (response.status === 200) {
-      await fetchKnockoutFixtures();
-      emit('tournament-started');
+      await fetchKnockoutFixtures()
+      emit('tournament-started')
     }
   } catch (error) {
-    console.error('Error starting knockout stages:', error);
+    console.error('Error starting knockout stages:', error)
   }
 }
 
+/* -----------------------
+   MOUNT
+-------------------------*/
 onMounted(() => {
-  fetchFixtures();
-  fetchKnockoutFixtures();
-  checkIfAllFixturesCompleted();
-});
+  fetchFixtures()
+  fetchKnockoutFixtures()
+  checkIfAllFixturesCompleted()
+})
 </script>
+
 
 <style lang="scss" scoped>
 .fixtures-container {

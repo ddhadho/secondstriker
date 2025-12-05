@@ -4,7 +4,7 @@ const getConfig = (env) => ({
   frontendUrl: process.env.FRONTEND_DEV_URL, 
   backendUrl: process.env.BACKEND_DEV_URL,
   apiUrl: process.env.API_DEV_URL, 
-  mongoURI: process.env.MONGO_DEV_URI, 
+  mongoURI: process.env.MONGO_URI || process.env.MONGO_DEV_URI, 
   jwtSecret: process.env.JWT_SECRET,
   sessionSecret: process.env.SESSION_SECRET,
   mpesa: {

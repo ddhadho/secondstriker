@@ -54,7 +54,9 @@ app.options('*', cors(), (req, res) => {
 });
 
 // Database connection
-connectToDB();
+if (process.env.NODE_ENV !== 'test') {
+  connectToDB();
+}
 
 const frontendProxy = createProxyMiddleware({
   target: config.frontendUrl, 
