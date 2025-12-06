@@ -1,0 +1,5 @@
+# Environment files
+server/.env
+ui/.env
+.env
+.env.*
