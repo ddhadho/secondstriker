@@ -56,10 +56,10 @@ exports.deposit = async (req, res) => {
     // Initiate STK Push
     let stkResult;
     try {
-      console.log(`Initiating STK push for user ${userId}, amount: ${amount}, phone: ${user.phoneNumber}`);
+      logger.info(`Initiating STK push for user ${userId}, amount: ${amount}, phone: ${user.phoneNumber}`);
       stkResult = await mpesaService.stkPush(user.phoneNumber, amount);
     } catch (mpesaError) {
-      console.error(`STK push failed for user ${userId}:`, mpesaError);
+      logger.error(`STK push failed for user ${userId}:`, mpesaError);
       await session.abortTransaction();
       throw new Error(`STK push failed: ${mpesaError.message}`);
     }
@@ -72,7 +72,7 @@ exports.deposit = async (req, res) => {
       // Commit the transaction
       await session.commitTransaction();
 
-      console.log(`Deposit initiated successfully for user ${userId}, checkoutRequestId: ${stkResult.CheckoutRequestID}`);
+      logger.info(`Deposit initiated successfully for user ${userId}, checkoutRequestId: ${stkResult.CheckoutRequestID}`);
       return res.json({
         success: true,
         message: 'Deposit initiated successfully',
@@ -84,7 +84,7 @@ exports.deposit = async (req, res) => {
         }
       });
     } else {
-      console.error(`STK push failed for user ${userId}:`, stkResult);
+      logger.error(`STK push failed for user ${userId}:`, stkResult);
       await session.abortTransaction();
       return res.status(400).json({
         success: false,
@@ -96,7 +96,7 @@ exports.deposit = async (req, res) => {
       });
     }
   } catch (error) {
-    console.error('Deposit error:', {
+    logger.error('Deposit error:', {
       userId,
       amount,
       error: {
@@ -128,7 +128,7 @@ exports.handleStkCallback = async (req, res) => {
     const { Body: { stkCallback } } = req.body;
     const { CheckoutRequestID, ResultCode, ResultDesc } = stkCallback;
 
-    console.log('STK callback received:', {
+    logger.info('STK callback received:', {
       checkoutRequestId: CheckoutRequestID,
       resultCode: ResultCode,
       resultDesc: ResultDesc
@@ -140,7 +140,7 @@ exports.handleStkCallback = async (req, res) => {
     }).session(session);
 
     if (!transaction) {
-      console.error(`Transaction not found for CheckoutRequestID: ${CheckoutRequestID}`);
+      logger.error(`Transaction not found for CheckoutRequestID: ${CheckoutRequestID}`);
       await session.abortTransaction();
       return res.json({ success: true }); // Always return success to M-Pesa
     }
@@ -148,7 +148,7 @@ exports.handleStkCallback = async (req, res) => {
     // Find the user
     const user = await User.findById(transaction.user).session(session);
     if (!user) {
-      console.error(`User not found for transaction: ${transaction._id}`);
+      logger.error(`User not found for transaction: ${transaction._id}`);
       await session.abortTransaction();
       return res.json({ success: true });
     }
@@ -171,7 +171,7 @@ exports.handleStkCallback = async (req, res) => {
       };
       await transaction.save({ session });
 
-      console.log(`Deposit completed successfully for user ${user._id}, amount: ${paidAmount}`);
+      logger.info(`Deposit completed successfully for user ${user._id}, amount: ${paidAmount}`);
     } else {
       // Update transaction status to failed
       transaction.status = 'failed';
@@ -182,14 +182,14 @@ exports.handleStkCallback = async (req, res) => {
       };
       await transaction.save({ session });
 
-      console.error(`Deposit failed for user ${user._id}:`, ResultDesc);
+      logger.error(`Deposit failed for user ${user._id}:`, ResultDesc);
     }
 
     await session.commitTransaction();
     return res.json({ success: true });
 
   } catch (error) {
-    console.error('STK callback error:', error);
+    logger.error('STK callback error:', error);
     await session.abortTransaction();
     return res.json({ success: true }); // Always return success to M-Pesa
   } finally {
@@ -293,7 +293,7 @@ exports.withdraw = async (req, res) => {
     await session.abortTransaction();
 
     // Log the error with proper error tracking
-    console.error('Withdrawal error:', {
+    logger.error('Withdrawal error:', {
       userId,
       amount,
       error: {
@@ -339,11 +339,11 @@ exports.handleB2CResult = async (req, res) => {
   session.startTransaction();
 
   try {
-    console.log('Received M-Pesa B2C result:', JSON.stringify(req.body, null, 2));
+    logger.info('Received M-Pesa B2C result:', JSON.stringify(req.body, null, 2));
     
     const { Result } = req.body;
     if (!Result) {
-      console.error('Invalid B2C result format:', JSON.stringify(req.body, null, 2));
+      logger.error('Invalid B2C result format:', JSON.stringify(req.body, null, 2));
       return res.status(400).json({ ResultCode: 1, ResultDesc: 'Invalid result format' });
     }
 
@@ -369,7 +369,7 @@ exports.handleB2CResult = async (req, res) => {
     );
 
     if (!transaction) {
-      console.warn(
+      logger.warn(
         `Transaction not found for ConversationID: ${ConversationID}, ` +
         `trying OriginatorConversationID: ${OriginatorConversationID}`
       );
@@ -382,7 +382,7 @@ exports.handleB2CResult = async (req, res) => {
     }
 
     if (!transaction) {
-      console.error(
+      logger.error(
         `Transaction not found for ConversationID: ${ConversationID} or ` +
         `OriginatorConversationID: ${OriginatorConversationID}`
       );
@@ -393,11 +393,11 @@ exports.handleB2CResult = async (req, res) => {
       });
     }
 
-    console.log(`Found transaction: ${JSON.stringify(transaction, null, 2)}`);
+    logger.info(`Found transaction: ${JSON.stringify(transaction, null, 2)}`);
 
     // Check if transaction is already processed to prevent double processing
     if (transaction.status === 'completed' || transaction.status === 'failed') {
-      console.warn(
+      logger.warn(
         `Transaction ${transaction._id} already processed with status: ${transaction.status}`
       );
       await session.abortTransaction();
@@ -409,7 +409,7 @@ exports.handleB2CResult = async (req, res) => {
 
     const user = await User.findById(transaction.user).session(session);
     if (!user) {
-      console.error(`User not found for transaction ${transaction._id}`);
+      logger.error(`User not found for transaction ${transaction._id}`);
       await session.abortTransaction();
       return res.status(404).json({ 
         ResultCode: 1, 
@@ -430,18 +430,17 @@ exports.handleB2CResult = async (req, res) => {
         await user.save({ session });
         await transaction.save({ session });
         
-        console.log(
-          `Withdrawal of ${TransactionAmount} successful for transaction ${transaction._id}, ` +
-          `receipt: ${TransactionID}. New user balance: ${user.balance}`
-        );
-      } catch (error) {
-        console.error(`Error processing successful transaction: ${error.message}`);
-        await session.abortTransaction();
-        return res.status(500).json({ 
-          ResultCode: 1, 
-          ResultDesc: 'Error processing successful transaction' 
-        });
-      }
+                  logger.info(
+                    `Withdrawal of ${TransactionAmount} successful for transaction ${transaction._id}, ` +
+                    `receipt: ${TransactionID}. New user balance: ${user.balance}`
+                  );        } catch (error) {
+          logger.error(`Error processing successful transaction: ${error.message}`);
+          await session.abortTransaction();
+          return res.status(500).json({ 
+            ResultCode: 1, 
+            ResultDesc: 'Error processing successful transaction' 
+          });
+        }
     } else {
       // Failed transaction
       try {
@@ -457,12 +456,11 @@ exports.handleB2CResult = async (req, res) => {
         await user.save({ session });
         await transaction.save({ session });
         
-        console.log(
-          `Refunded ${transaction.amount} to user ${user._id} due to failed withdrawal. ` +
-          `New balance: ${user.balance}. Failure reason: ${ResultDesc}`
-        );
-      } catch (error) {
-        console.error(`Error processing failed transaction: ${error.message}`);
+                  logger.info(
+                    `Refunded ${transaction.amount} to user ${user._id} due to failed withdrawal. ` +
+                    `New balance: ${user.balance}. Failure reason: ${ResultDesc}`
+                  );      } catch (error) {
+        logger.error(`Error processing failed transaction: ${error.message}`);
         await session.abortTransaction();
         return res.status(500).json({ 
           ResultCode: 1, 
@@ -482,7 +480,7 @@ exports.handleB2CResult = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error processing M-Pesa B2C result:', error);
+    logger.error('Error processing M-Pesa B2C result:', error);
     await session.abortTransaction();
     return res.status(500).json({ 
       ResultCode: 1, 

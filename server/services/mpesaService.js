@@ -1,5 +1,6 @@
 const axios = require('axios');
 const config = require('../config/config');
+const logger = require('../utils/logger');
 
 // Utility: Format phone number to international format
 const formatPhoneNumber = (phoneNumber) => {
@@ -23,28 +24,28 @@ const generateOriginatorConversationID = () => {
 };
 
 const validateInput = (data, requiredFields) => {
-  console.log('Validating input:', { data, requiredFields }); // Debugging input data
+  logger.info('Validating input:', { data, requiredFields }); // Debugging input data
   const errors = [];
   requiredFields.forEach(field => {
     if (!data[field]) {
-      console.log(`Missing required field: ${field}`); // Log missing fields
+      logger.info(`Missing required field: ${field}`); // Log missing fields
       errors.push(`${field} is required`);
     }
   });
   if (errors.length > 0) {
     const errorMessage = `Validation failed: ${errors.join(', ')}`;
-    console.log(errorMessage); // Log validation failure
+    logger.info(errorMessage); // Log validation failure
     throw new Error(errorMessage);
   }
-  console.log('Input validation passed'); // Log successful validation
+  logger.info('Input validation passed'); // Log successful validation
 };
 
 
 exports.generateAccessToken = async () => {
   try {
-    console.log('Generating access token'); // Debugging access token generation
+    logger.info('Generating access token'); // Debugging access token generation
     const auth = Buffer.from(`${config.mpesa.consumerKey}:${config.mpesa.consumerSecret}`).toString('base64');
-    console.log('Authorization header:', auth); // Debugging authorization header
+    logger.info('Authorization header:', auth); // Debugging authorization header
 
     const response = await axios.get(`${config.mpesa.baseUrl}/oauth/v1/generate?grant_type=client_credentials`, {
       headers: {
@@ -52,17 +53,17 @@ exports.generateAccessToken = async () => {
       }
     });
 
-    console.log('Access token response:', response.data); // Log response data
+    logger.info('Access token response:', response.data); // Log response data
     return response.data.access_token;
   } catch (error) {
-    console.error('Error generating access token:', error.response?.data || error.message); // Detailed error
+    logger.error('Error generating access token:', error.response?.data || error.message); // Detailed error
     throw error;
   }
 };
 
 exports.stkPush = async (phoneNumber, amount) => {
   try {
-    console.log('STK push initiated with:', { phoneNumber, amount });
+    logger.info('STK push initiated with:', { phoneNumber, amount });
 
     // Validate input
     validateInput({ phoneNumber, amount }, ['phoneNumber', 'amount']);
@@ -92,7 +93,7 @@ exports.stkPush = async (phoneNumber, amount) => {
       AccountReference: 'Second Striker',
       TransactionDesc: 'Deposit to Second Striker Wallet'
     };
-    console.log('STK Push payload:', payload);
+    logger.info('STK Push payload:', payload);
 
     // Sending request
     const response = await axios.post(
@@ -106,10 +107,10 @@ exports.stkPush = async (phoneNumber, amount) => {
       }
     );
 
-    console.log('STK push response:', response.data);
+    logger.info('STK push response:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Error in STK push:', error.response?.data || error.message);
+    logger.error('Error in STK push:', error.response?.data || error.message);
     throw error;
   }
 };
@@ -119,11 +120,11 @@ exports.bulkPayment = async (phoneNumber, amount) => {
     validateInput({ phoneNumber, amount }, ['phoneNumber', 'amount']);
 
     const originatorConversationID = generateOriginatorConversationID();
-    console.log('Generated OriginatorConversationID:', originatorConversationID);
+    logger.info('Generated OriginatorConversationID:', originatorConversationID);
 
     // Format the phone number
     const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
-    console.log('Formatted phone number:', formattedPhoneNumber);
+    logger.info('Formatted phone number:', formattedPhoneNumber);
 
     const accessToken = await this.generateAccessToken();
 
@@ -150,10 +151,10 @@ exports.bulkPayment = async (phoneNumber, amount) => {
       }
     );
 
-    console.log('Daraja B2C Response:', JSON.stringify(response.data, null, 2));
+    logger.info('Daraja B2C Response:', JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (error) {
-    console.error('Error in bulk payment:', error);
+    logger.error('Error in bulk payment:', error);
     throw error;
   }
 };

@@ -3,3 +3,8 @@ server/.env
 ui/.env
 .env
 .env.*
+
+# Logs
+*.log
+server/*.log
+logs/
