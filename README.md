@@ -34,7 +34,17 @@ This is a **portfolio project** built to demonstrate backend engineering capabil
 > 3. Match results/standings
 > 4. Admin panel (if exists)
 
-*[Screenshots to be added]*
+### Tournament Dashboard
+   ![Dashboard](screenshots/details.png)
+   
+   ### Wallet Interface
+   ![Wallet](screenshots/fixtures.png)
+   
+   ### Tournament Details
+   ![Tournament](screenshots/members.png)
+   
+   ### Match Results
+   ![Feature](screenshots/wallet.jpeg)
 
 ---
 

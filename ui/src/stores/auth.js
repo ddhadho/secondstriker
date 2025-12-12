@@ -9,6 +9,7 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: !!localStorage.getItem('token'),
     isAdmin: false,
     registrationEmail: null,
+    isLoading: false,
   }),
   getters: {
     checkIfAdmin: (state) => (creatorId) => {
@@ -17,6 +18,7 @@ export const useAuthStore = defineStore('auth', {
   },
   actions: {
     async login(credentials) {
+      this.isLoading = true;
       try {
         const response = await api.post('/users/login', credentials);
         const { token, user } = response.data;
@@ -35,6 +37,8 @@ export const useAuthStore = defineStore('auth', {
           success: false,
           error: error.response?.data?.message || 'Invalid username or password'
         };
+      } finally {
+        this.isLoading = false;
       }
     },
 

@@ -632,7 +632,7 @@ M-Pesa Production API
 5. ❌ **Monitoring**: No APM or metrics dashboard
 
 ### Planned Enhancements
-1. ✅ Fraud detection integration
+1. ✅ Fraud detection integration-fraudguard-ml
 2. ✅ Implement Redis caching for frequently accessed data
 3. ✅ Add comprehensive error tracking (Sentry)
 4. ✅ Build admin dashboard for tournament management

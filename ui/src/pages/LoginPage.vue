@@ -59,6 +59,9 @@ const showPassword = ref(false)
 
 // Submit handler
 const onSubmit = async () => {
+  $q.loading.show({
+    message: 'Logging in...'
+  });
   try {
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(usernameOrEmail.value);
     const credentials = {
@@ -78,6 +81,8 @@ const onSubmit = async () => {
       color: 'negative',
       message: error.message || 'Login failed. Please try again.'
     });
+  } finally {
+    $q.loading.hide();
   }
 };
 
