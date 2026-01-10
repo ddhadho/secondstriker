@@ -89,7 +89,7 @@ exports.stkPush = async (phoneNumber, amount) => {
       PartyA: formattedPhoneNumber,
       PartyB: config.mpesa.shortcode,
       PhoneNumber: formattedPhoneNumber,
-      CallBackURL: `${process.env.BASE_URL}/mpesa/callback`,
+      CallBackURL: `${process.env.BASE_URL}/mpesa/callback?token=${process.env.MPESA_CALLBACK_SECRET}`,
       AccountReference: 'Second Striker',
       TransactionDesc: 'Deposit to Second Striker Wallet'
     };
@@ -139,8 +139,8 @@ exports.bulkPayment = async (phoneNumber, amount) => {
         PartyA: config.mpesa.shortcode,
         PartyB: formattedPhoneNumber,
         Remarks: 'Withdrawal from Second Striker',
-        QueueTimeOutURL: `${process.env.BASE_URL}/mpesa/b2c/queue`,
-        ResultURL: `${process.env.BASE_URL}/mpesa/b2c/result`,
+        QueueTimeOutURL: `${process.env.BASE_URL}/mpesa/b2c/queue?token=${process.env.MPESA_CALLBACK_SECRET}`,
+        ResultURL: `${process.env.BASE_URL}/mpesa/b2c/result?token=${process.env.MPESA_CALLBACK_SECRET}`,
         Occasion: 'Withdrawal',
       },
       {
