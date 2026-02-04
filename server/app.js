@@ -13,6 +13,7 @@ const passport = require('passport');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const compression = require('compression');
+var logger = require('morgan');
 
 const connectToDB = require('./db');
 
