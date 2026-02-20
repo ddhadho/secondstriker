@@ -8,3 +8,7 @@ ui/.env
 *.log
 server/*.log
 logs/
+
+# Node modules
+server/node_modules
+ui/node_modules
