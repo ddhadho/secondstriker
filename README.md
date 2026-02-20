@@ -1,4 +1,4 @@
-# SecondStriker ⚽
+# SecondStriker 
 
 > Full-stack e-sports tournament platform with integrated M-Pesa payments for entry fees and automated prize distribution.
 
@@ -12,21 +12,21 @@
 
 ---
 
-## 🎯 What This Project Demonstrates
+##  What This Project Demonstrates
 
 SecondStriker showcases production-grade backend engineering skills:
 
-- ✅ **Payment Integration**: M-Pesa Daraja API with webhook-based reconciliation
-- ✅ **Financial Transactions**: Idempotent operations, race condition handling, async flows
-- ✅ **Microservices Architecture**: Separation of concerns (payments, notifications, business logic)
-- ✅ **REST API Design**: JWT authentication, WebSockets, database optimization
-- ✅ **Full-Stack Development**: Node.js backend + Vue.js/Quasar frontend
+- **Payment Integration**: M-Pesa Daraja API with webhook-based reconciliation
+- **Financial Transactions**: Idempotent operations, race condition handling, async flows
+- **Microservices Architecture**: Separation of concerns (payments, notifications, business logic)
+- **REST API Design**: JWT authentication, WebSockets, database optimization
+- **Full-Stack Development**: Node.js backend + Vue.js/Quasar frontend
 
 This is a **portfolio project** built to demonstrate backend engineering capabilities for tournament management and fintech applications.
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 > **Note**: Add 3-4 screenshots here showing:
 > 1. Tournament dashboard
@@ -48,7 +48,7 @@ This is a **portfolio project** built to demonstrate backend engineering capabil
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -89,34 +89,34 @@ This is a **portfolio project** built to demonstrate backend engineering capabil
 - **JWT authentication** with secure token management
 - **WebSockets** for real-time tournament updates
 
-📄 **Detailed Architecture**: See [docs/architecture.md](docs/architecture.md)
+**Detailed Architecture**: See [docs/architecture.md](docs/architecture.md)
 
 ---
 
-## 🚀 Features
+## Features
 
 ### Tournament Management
-- ✅ Create and manage leagues (round-robin fixtures)
-- ✅ Single-elimination tournament brackets
-- ✅ Real-time match updates and standings
-- ✅ Player and team statistics tracking
+- Create and manage leagues (round-robin fixtures)
+- Single-elimination tournament brackets
+- Real-time match updates and standings
+- Player and team statistics tracking
 
 ### Wallet System (M-Pesa Integration)
-- ✅ **Deposits**: STK Push for instant mobile money deposits
-- ✅ **Withdrawals**: B2C automated payouts to mobile numbers
-- ✅ **Entry Fees**: Automatic deduction for tournament registration
-- ✅ **Prize Distribution**: Automated winner payouts
-- ✅ **Transaction History**: Complete audit trail
+- **Deposits**: STK Push for instant mobile money deposits
+- **Withdrawals**: B2C automated payouts to mobile numbers
+- **Entry Fees**: Automatic deduction for tournament registration
+- **Prize Distribution**: Automated winner payouts
+- **Transaction History**: Complete audit trail
 
 ### User Features
-- ✅ Secure authentication (JWT-based)
-- ✅ User profiles and statistics
-- ✅ Real-time notifications
-- ✅ Responsive UI (desktop + mobile)
+- Secure authentication (JWT-based)
+- User profiles and statistics
+- Real-time notifications
+- Responsive UI (desktop + mobile)
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - **Runtime**: Node.js (v16+)
@@ -143,7 +143,7 @@ This is a **portfolio project** built to demonstrate backend engineering capabil
 
 ---
 
-## 📦 Installation & Setup
+## Installation & Setup
 
 ### Prerequisites
 - Node.js (v16 or higher)
@@ -210,7 +210,7 @@ Frontend will run on `http://localhost:9000`
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Run backend tests
@@ -228,7 +228,7 @@ npm run test:coverage
 
 ---
 
-## 📖 API Documentation
+## API Documentation
 
 ### Authentication
 ```
@@ -252,11 +252,11 @@ POST /api/mpesa/b2c/result   - B2C result callback
 POST /api/mpesa/b2c/queue    - B2C timeout callback
 ```
 
-📄 **Full API Reference**: See [docs/api.md](docs/api.md)
+**Full API Reference**: See [docs/api.md](docs/api.md)
 
 ---
 
-## 🎓 What I Learned
+## What I Learned
 
 Building SecondStriker taught me critical production engineering lessons:
 
@@ -289,67 +289,5 @@ Building SecondStriker taught me critical production engineering lessons:
 
 ---
 
-## 🔧 Known Limitations & Future Improvements
 
-### Current Limitations
-- M-Pesa sandbox testing only (production credentials required for live)
-- No admin dashboard for tournament management
-- Limited analytics/reporting features
-- Email notifications not fully implemented
 
-### Planned Improvements
-- [ ] Add comprehensive test coverage (target: 90%)
-- [ ] Implement caching layer (Redis) for frequently accessed data
-- [ ] Add rate limiting to prevent API abuse
-- [ ] Build admin dashboard for tournament operators
-- [ ] Add fraud detection integration (see [FraudGuard project](https://github.com/ddhadho/fraudguard-ml))
-- [ ] Implement real-time chat for tournament participants
-- [ ] Add analytics dashboard (user retention, revenue metrics)
-
----
-
-## 🤝 Contributing
-
-This is a portfolio project, but feedback and suggestions are welcome!
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/improvement`)
-3. Commit changes (`git commit -m 'Add improvement'`)
-4. Push to branch (`git push origin feature/improvement`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
-
----
-
-## 👤 Author
-
-**Omar Dhadho Said**
-
-- GitHub: [@ddhadho](https://github.com/ddhadho)
-- LinkedIn: [dhadho-said](https://linkedin.com/in/dhadho-said-2aa3ba386)
-- Email: dhaddho24@gmail.com
-
----
-
-## 🙏 Acknowledgments
-
-- Safaricom Daraja API documentation
-- M-Pesa developer community
-- Quasar Framework team
-- Node.js/Express ecosystem
-
----
-
-## 📚 Related Projects
-
-- **[FraudGuard-ML](https://github.com/ddhadho/fraudguard-ml)**: Real-time fraud detection system designed to integrate with payment platforms like SecondStriker
-- **[CityHall](https://github.com/ddhadho/cityhall)**: Time-series database for storing transaction metrics and system performance data
-
----
-
-**Built with ❤️ in Nairobi, Kenya**
