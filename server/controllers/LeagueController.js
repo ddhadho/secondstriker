@@ -8,15 +8,12 @@ const mongoose = require('mongoose');
 
 // Create a new league with balance check and deduction
 exports.createLeague = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
-    const { name, fee } = req.body;
+    const { name, fee, numberOfTeams } = req.body;
 
     // Basic validation
-    if (!name) {
-      return res.status(400).json({ message: 'League name is required' });
+    if (!name || !fee) {
+      return res.status(400).json({ message: 'League name and fee are required' });
     }
 
     if (typeof fee !== 'number' || fee < 5 || fee > 999.99) {
@@ -24,7 +21,7 @@ exports.createLeague = async (req, res) => {
     }
 
     // Find user and check balance
-    const user = await User.findById(req.user.id).session(session);
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -42,7 +39,8 @@ exports.createLeague = async (req, res) => {
       name,
       fee,
       creator: req.user.id,
-      members: [req.user.id], 
+      members: [req.user.id],
+      numberOfTeams, 
       status: 'draft', 
       createdAt: new Date()
     });
@@ -50,23 +48,16 @@ exports.createLeague = async (req, res) => {
     // Deduct fee from user's balance
     user.balance -= fee;
 
-    // Ensure balance is still sufficient before saving
-    if (user.balance < 0) {
-      await session.abortTransaction();
-      return res.status(400).json({ message: 'Transaction failed: insufficient balance' });
-    }
-
     // Save both user and league changes
-    await user.save({ session });
-    await league.save({ session });
-
-    await session.commitTransaction();
+    await user.save();
+    await league.save();
 
     res.status(201).json({
       league: {
         leagueId: league._id,
         name: league.name,
         fee: league.fee,
+        owner: league.creator, // Add the creator/owner ID
         createdAt: league.createdAt,
         members: league.members,
         status: league.status
@@ -75,11 +66,8 @@ exports.createLeague = async (req, res) => {
     });
 
   } catch (err) {
-    await session.abortTransaction();
     console.error('League creation error:', err);
     res.status(500).json({ message: 'Failed to create league' });
-  } finally {
-    session.endSession();
   }
 };
 
@@ -106,6 +94,10 @@ exports.getLeagues = async (req, res) => {
 // Get a specific league by ID
 exports.getLeagueById = async (req, res) => {
   try {
+    // Validate leagueId
+    if (!mongoose.Types.ObjectId.isValid(req.params.leagueId)) {
+      return res.status(404).json({ message: 'League not found' });
+    }
     const league = await League.findById(req.params.leagueId)
       .populate('members', 'username')
       .populate('creator', 'username');
@@ -147,6 +139,10 @@ exports.inviteUserToLeague = async (req, res) => {
   const { leagueId, userId } = req.body; 
   
   try {
+    // Validate leagueId
+    if (!mongoose.Types.ObjectId.isValid(leagueId)) {
+      return res.status(404).json({ message: 'League does not exist' });
+    }
     // Check if the league exists
     const league = await League.findById(leagueId);
     if (!league) {
@@ -189,7 +185,11 @@ exports.inviteUserToLeague = async (req, res) => {
 
 exports.updateLeague = async (req, res) => {
   try {
-    const { leagueId } = req.params;
+    const { leagueId } = req.params; // Declare it once
+    // Validate leagueId
+    if (!mongoose.Types.ObjectId.isValid(leagueId)) { // Use the declared leagueId
+      return res.status(404).json({ error: 'League not found' });
+    }
     const userId = req.user.id;
 
     // Fetch the league and check permissions
@@ -227,7 +227,11 @@ exports.updateLeague = async (req, res) => {
 // Controller to start the league
 exports.startLeague = async (req, res) => {
   try {
-    const { leagueId } = req.params;
+    const { leagueId } = req.params; // Declare it once
+    // Validate leagueId
+    if (!mongoose.Types.ObjectId.isValid(leagueId)) { // Use the declared leagueId
+      return res.status(404).json({ message: 'League not found' });
+    }
     const userId = req.user.id;
 
     // Find the league by its ID
@@ -288,6 +292,12 @@ exports.startLeague = async (req, res) => {
 // Get league table by league ID
 exports.getLeagueTable = async (req, res) => {
   try {
+    const { leagueId } = req.params;
+    // Validate leagueId
+    if (!mongoose.Types.ObjectId.isValid(leagueId)) {
+      return res.status(404).json({ message: 'League not found' });
+    }
+
     const groupTables = await LeagueTable.find({ 
       competitionId: req.params.leagueId
     })
@@ -303,8 +313,13 @@ exports.getLeagueTable = async (req, res) => {
 // Get league fixtures by league ID
 exports.getLeagueFixtures = async (req, res) => {
   try {
+    const { leagueId } = req.params;
+    // Validate leagueId
+    if (!mongoose.Types.ObjectId.isValid(leagueId)) {
+      return res.status(404).json({ message: 'League not found' });
+    }
     const fixtures = await Fixture.find({ 
-      competitionId: req.params.leagueId
+      competitionId: leagueId
     })
     .populate('team1', 'username')
     .populate('team2', 'username');
@@ -325,12 +340,9 @@ exports.updateFixtureResult = async (req, res) => {
     return res.status(400).json({ message: 'Both team scores are required' });
   }
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
   try {
     // Validate league and permissions
-    const league = await League.findById(leagueId).session(session);
+    const league = await League.findById(leagueId);
     if (!league) {
       return res.status(404).json({ message: 'League not found' });
     }
@@ -344,15 +356,14 @@ exports.updateFixtureResult = async (req, res) => {
     }
 
     // Get fixture and validate
-    const fixture = await Fixture.findOne({ _id: fixtureId, competitionId }).session(session);
+    const fixture = await Fixture.findOne({ _id: fixtureId, competitionId });
     if (!fixture) {
       return res.status(404).json({ message: 'Fixture not found' });
     }
 
     // Get league table entries
-    const leagueTable = await LeagueTable.find({ competitionId }).session(session);
+    const leagueTable = await LeagueTable.find({ competitionId });
     if (!leagueTable) {
-      await session.abortTransaction();
       return res.status(404).json({ message: 'League table not found' });
     }
 
@@ -360,7 +371,6 @@ exports.updateFixtureResult = async (req, res) => {
     const team2 = leagueTable.find(entry => entry.user.toString() === fixture.team2.toString());
 
     if (!team1 || !team2) {
-      await session.abortTransaction();
       return res.status(400).json({ message: 'Teams not found in league table' });
     }
 
@@ -437,11 +447,9 @@ exports.updateFixtureResult = async (req, res) => {
     fixture.status = 'completed';
 
     // Save all changes
-    await fixture.save({ session });
-    await team1.save({ session });
-    await team2.save({ session });
-
-    await session.commitTransaction();
+    await fixture.save();
+    await team1.save();
+    await team2.save();
 
     res.status(200).json({ 
       message: 'Fixture result updated successfully', 
@@ -450,11 +458,8 @@ exports.updateFixtureResult = async (req, res) => {
       team2Stats: team2
     });
   } catch (error) {
-    await session.abortTransaction();
     console.error('Error updating fixture result:', error);
     res.status(500).json({ message: 'Failed to update fixture result' });
-  } finally {
-    session.endSession();
   }
 };
 
