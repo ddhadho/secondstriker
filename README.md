@@ -84,7 +84,7 @@ This is a **portfolio project** built to demonstrate backend engineering capabil
 ```
 
 **Key Technical Decisions:**
-- **MongoDB transactions** for financial consistency (ACID guarantees)
+- **Financial Consistency**: Achieved through careful application-level logic for critical operations. (Note: While MongoDB supports multi-document transactions, for performance and specific use-case optimizations, key financial updates are handled atomically per document or through compensating transactions at the application layer where applicable.)
 - **Webhook-based async flows** for M-Pesa callbacks
 - **JWT authentication** with secure token management
 - **WebSockets** for real-time tournament updates
@@ -156,6 +156,9 @@ This is a **portfolio project** built to demonstrate backend engineering capabil
 # Clone repository
 git clone https://github.com/ddhadho/secondstriker.git
 cd secondstriker/server
+
+# Start MongoDB using Docker Compose
+docker-compose up -d
 
 # Install dependencies
 npm install
@@ -260,6 +263,24 @@ POST /api/mpesa/b2c/queue    - B2C timeout callback
 
 Building SecondStriker taught me critical production engineering lessons:
 
+---
+
+## Project Status
+
+This project is a **portfolio piece** demonstrating backend and full-stack development skills. It is feature-complete as designed for its portfolio purpose, but not actively maintained for new feature development unless specifically requested or for critical bug fixes.
+
+---
+
+## Contributing
+
+As a portfolio project, direct contributions via pull requests are not the primary focus. However, I welcome:
+
+-   **Bug Reports**: Please open an issue if you find any bugs.
+-   **Feature Suggestions**: Feel free to open an issue to suggest new features or improvements.
+-   **Feedback**: Any constructive feedback on the code, architecture, or documentation is highly appreciated!
+
+---
+
 ### 1. **Payment System Reliability**
 - Idempotency is non-negotiable for financial transactions
 - Always use database transactions (ACID) for money operations
@@ -283,9 +304,12 @@ Building SecondStriker taught me critical production engineering lessons:
 - Store sensitive credentials securely (environment variables, never in code)
 
 ### 5. **Database Design**
-- Use MongoDB transactions for multi-document operations
 - Indexes matter for query performance (especially on foreign keys)
 - Metadata fields help with debugging (store timestamps, IP addresses, etc.)
+
+### 6. **Containerization with Docker**
+- How to use Docker Compose for consistent local development environments.
+- Benefits of containerization for isolation, portability, and simplified setup.
 
 ---
 
