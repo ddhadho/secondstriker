@@ -7,8 +7,7 @@ const User = require('../models/User');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongoose = require('mongoose');
 
-let mongoServer;
-let conn;
+const uri = 'mongodb://localhost:27017/test';
 
 // Mock the sendEmail function
 const emailService = require('../config/email');
@@ -16,29 +15,31 @@ let sendEmailStub;
 
 describe('User Controller', () => {
   before(async () => {
-    // Start the in-memory MongoDB server
-    mongoServer = await MongoMemoryServer.create();
-    const uri = mongoServer.getUri();
-    
-    // Connect Mongoose to the in-memory database
     await mongoose.connect(uri);
-    conn = mongoose.connection;
 
     // Stub sendEmail to prevent actual emails from being sent during tests
-    sendEmailStub = sinon.stub(emailService, 'sendEmail').returns(true);
+    sendEmailStub = sinon.stub(emailService, 'sendEmail').callsFake((to, template, data) => {
+      if (template === 'verificationEmail' || template === 'otpEmail' || template === 'passwordReset') {
+        return Promise.resolve(true);
+      }
+      return Promise.resolve(true);
+    });
   });
 
   afterEach(async () => {
     // Clear the database after each test
-    await User.deleteMany({});
+    const collections = mongoose.connection.collections;
+    for (const key in collections) {
+      const collection = collections[key];
+      await collection.deleteMany();
+    }
   });
 
   after(async () => {
     // Restore the stubbed function
     sendEmailStub.restore();
-    // Disconnect Mongoose and stop the in-memory server
+    // Disconnect Mongoose
     await mongoose.disconnect();
-    await mongoServer.stop();
   });
 
   describe('POST /users/register', () => {
@@ -61,7 +62,7 @@ describe('User Controller', () => {
       // The register method in the controller has a specific check for NODE_ENV === 'test'
       // to auto-verify the email and skip sending the email.
       expect(user.isEmailVerified).to.be.true; 
-      expect(user.otp).to.be.a('number'); // OTP should be generated and stored
+      expect(user.otp).to.be.a('string'); // OTP should be generated and stored
       expect(sendEmailStub.called).to.be.false; // Email should not be sent in test env
     });
 
@@ -158,7 +159,7 @@ describe('User Controller', () => {
         email: 'unverified@example.com',
         password: 'password123',
         isEmailVerified: false,
-        otp: 123456,
+        otp: '123456',
         otpExpires: Date.now() + 10 * 60 * 1000
       });
       user.password = await require('bcryptjs').hash('password123', 10);
@@ -189,7 +190,7 @@ describe('User Controller', () => {
         isEmailVerified: false,
       });
       user.password = await require('bcryptjs').hash('password123', 10);
-      otp = Math.floor(100000 + Math.random() * 900000); // Generate a fresh OTP
+      otp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate a fresh OTP
       user.otp = otp;
       user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
       testUser = await user.save();
@@ -219,7 +220,7 @@ describe('User Controller', () => {
         .post('/users/verify-otp')
         .send({
           email: testUser.email,
-          otp: 999999 // Invalid OTP
+          otp: '999999' // Invalid OTP
         });
 
       expect(res.statusCode).to.equal(400);
@@ -282,8 +283,8 @@ describe('User Controller', () => {
       expect(sendEmailStub.calledOnce).to.be.true; // Check if email was attempted to be sent
 
       const updatedUser = await User.findById(userToResendOtp._id);
-      expect(updatedUser.otp).to.not.equal(111111); // OTP should be new
-      expect(updatedUser.otpExpires).to.be.above(Date.now()); // OTP should be valid
+      expect(updatedUser.otp).to.not.equal('111111'); // OTP should be new
+      expect(updatedUser.otpExpires.getTime()).to.be.above(Date.now()); // OTP should be valid
     });
 
     it('should return 400 if email is missing', async () => {
@@ -372,7 +373,7 @@ describe('User Controller', () => {
   });
 
   // Test for updateProfile
-  describe('PUT /users/profile', () => {
+  describe('PATCH /users/profile', () => {
     let authToken;
     let userId;
 
@@ -398,7 +399,7 @@ describe('User Controller', () => {
 
     it('should successfully update user profile', async () => {
       const res = await request(app)
-        .put('/users/profile')
+        .patch('/users/profile')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           username: 'newusername',
@@ -417,19 +418,18 @@ describe('User Controller', () => {
 
     it('should return 400 for invalid updates', async () => {
       const res = await request(app)
-        .put('/users/profile')
+        .patch('/users/profile')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           invalidField: 'somevalue'
         });
-
       expect(res.statusCode).to.equal(400);
       expect(res.body).to.have.property('message', 'Invalid updates');
     });
 
     it('should return 401 if no token is provided', async () => {
       const res = await request(app)
-        .put('/users/profile')
+        .patch('/users/profile')
         .send({ username: 'newusername' });
 
       expect(res.statusCode).to.equal(401);
@@ -438,7 +438,7 @@ describe('User Controller', () => {
   });
 
   // Test for updatePhoneNumber (redundant with updateProfile, but kept for explicit testing if needed)
-  describe('PUT /users/update-phone', () => {
+  describe('PUT /users/phone', () => {
     let authToken;
     let userId;
 
@@ -463,7 +463,7 @@ describe('User Controller', () => {
 
     it('should successfully update user phone number', async () => {
       const res = await request(app)
-        .put('/users/update-phone')
+        .put('/users/phone')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           phoneNumber: '0712345678'
@@ -479,7 +479,7 @@ describe('User Controller', () => {
 
     it('should return 401 if no token is provided', async () => {
       const res = await request(app)
-        .put('/users/update-phone')
+        .put('/users/phone')
         .send({ phoneNumber: '0712345678' });
 
       expect(res.statusCode).to.equal(401);
@@ -488,7 +488,7 @@ describe('User Controller', () => {
   });
 
   // Test for requestPasswordReset
-  describe('POST /users/request-password-reset', () => {
+  describe('POST /users/forgot-password', () => {
     let registeredUser;
 
     beforeEach(async () => {
@@ -498,11 +498,12 @@ describe('User Controller', () => {
         password: await require('bcryptjs').hash('password123', 10),
         isEmailVerified: true
       });
+      sendEmailStub.resetHistory(); // Reset stub call count before each test
     });
 
     it('should successfully send password reset instructions', async () => {
       const res = await request(app)
-        .post('/users/request-password-reset')
+        .post('/users/forgot-password')
         .send({ email: registeredUser.email });
 
       expect(res.statusCode).to.equal(200);
@@ -511,23 +512,21 @@ describe('User Controller', () => {
 
       const updatedUser = await User.findById(registeredUser._id);
       expect(updatedUser.passwordResetToken).to.exist;
-      expect(updatedUser.passwordResetExpires).to.be.above(Date.now());
+      expect(updatedUser.passwordResetExpires.getTime()).to.be.above(Date.now());
     });
 
     it('should return 400 if email is missing', async () => {
       const res = await request(app)
-        .post('/users/request-password-reset')
+        .post('/users/forgot-password')
         .send({});
-
       expect(res.statusCode).to.equal(400);
       expect(res.body).to.have.property('message', 'Email is required');
     });
 
     it('should return 400 if user not found', async () => {
       const res = await request(app)
-        .post('/users/request-password-reset')
+        .post('/users/forgot-password')
         .send({ email: 'nonexistent@example.com' });
-
       expect(res.statusCode).to.equal(400);
       expect(res.body).to.have.property('message', 'User not found');
     });

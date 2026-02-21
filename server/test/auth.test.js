@@ -4,11 +4,21 @@ const { expect } = require('chai');
 const app = require('../app'); // Assuming your express app is exported from app.js
 const User = require('../models/User');
 
+const mongoose = require('mongoose');
+const uri = 'mongodb://localhost:27017/test';
+
 describe('Authentication API', () => {
 
-  // Clean up the user created during tests
+  before(async () => {
+    await mongoose.connect(uri);
+  });
+
+  afterEach(async () => {
+    await User.deleteMany({});
+  });
+
   after(async () => {
-    await User.deleteOne({ email: 'testuser@example.com' });
+    await mongoose.disconnect();
   });
 
   describe('POST /users/register', () => {
@@ -21,9 +31,15 @@ describe('Authentication API', () => {
           password: 'password123'
         });
       expect(res.statusCode).to.equal(201);
-              expect(res.body).to.have.property('message', 'Registration successful. Verify OTP to complete login.');    });
+      expect(res.body).to.have.property('message', 'Registration successful. Verify OTP to complete login.');
+    });
 
     it('should not register a user with an existing email', async () => {
+      await User.create({
+        username: 'testuser',
+        email: 'testuser@example.com',
+        password: 'password123'
+      });
       const res = await request(app)
         .post('/users/register')
         .send({
@@ -37,6 +53,16 @@ describe('Authentication API', () => {
   });
 
   describe('POST /users/login', () => {
+    beforeEach(async () => {
+        await request(app)
+            .post('/users/register')
+            .send({
+                username: 'testuser',
+                email: 'testuser@example.com',
+                password: 'password123'
+            });
+    });
+
     it('should log in a registered user and return a token', async () => {
       const res = await request(app)
         .post('/users/login')

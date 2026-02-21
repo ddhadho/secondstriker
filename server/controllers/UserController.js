@@ -2,7 +2,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const { sendEmail } = require('../config/email');
+const emailService = require('../config/email');
 
 class UserController {
   static async register(req, res) {
@@ -39,7 +39,7 @@ class UserController {
         user.isEmailVerified = true;
       } else {
         // Send OTP to user's email (using your email utility)
-        await sendEmail(email, 'verificationEmail', otp);
+        await emailService.sendEmail(email, 'verificationEmail', otp);
       }
   
       await user.save();
@@ -220,7 +220,7 @@ class UserController {
       await user.save();
 
       const resetURL = `${process.env.BASE_URL}/reset-password/${resetToken}`;
-      await sendEmail(email, 'passwordReset', resetURL);
+      await emailService.sendEmail(email, 'passwordReset', resetURL);
 
       res.json({
         message: 'Password reset instructions sent to your email'
@@ -258,7 +258,8 @@ class UserController {
         });
       }
 
-      user.password = password;
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
       user.passwordResetToken = undefined;
       user.passwordResetExpires = undefined;
       await user.save();
@@ -299,7 +300,7 @@ class UserController {
       await user.save();
 
       // Send the OTP via email
-      await sendEmail(email, 'otpEmail', otp); // Use an OTP email template
+      await emailService.sendEmail(email, 'otpEmail', otp); // Use an OTP email template
 
       res.json({ message: 'OTP resent successfully. Please check your email.' });
     } catch (error) {
