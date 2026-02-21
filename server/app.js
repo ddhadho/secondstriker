@@ -37,7 +37,10 @@ const limiter = rateLimit({
     res.status(429).send('Too many requests, please try again later.');
   },
 });
-app.use(limiter);
+// Apply to all requests unless in test environment
+if (process.env.NODE_ENV !== 'test') {
+  app.use(limiter);
+}
 
 // --------------------- CORS Middleware ---------------------
 const allowedOrigins = [config.frontendUrl]; // e.g., 'https://secondstriker.vercel.app'
