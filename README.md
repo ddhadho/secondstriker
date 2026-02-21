@@ -126,7 +126,7 @@ This is a **portfolio project** built to demonstrate backend engineering capabil
 - **Payments**: M-Pesa Daraja API (STK Push + B2C)
 - **Real-time**: WebSockets (Socket.io)
 - **Logging**: Winston
-- **Email**: Nodemailer
+- **Email**: Resend
 
 ### Frontend
 - **Framework**: Vue.js 3
@@ -188,6 +188,9 @@ MPESA_SECURITY_CREDENTIAL=your_security_credential
 # Server
 BASE_URL=http://localhost:3000
 PORT=3000
+
+# Email (Resend)
+RESEND_API_KEY=your_resend_api_key
 ```
 
 ### Frontend Setup

@@ -1,13 +1,6 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// Create reusable transporter
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USERNAME,
-    pass: process.env.EMAIL_PASSWORD 
-  }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Email templates
 const emailTemplates = {
@@ -63,13 +56,19 @@ const emailTemplates = {
 const sendEmail = async (to, template, data = {}) => {
   try {
     const emailContent = emailTemplates[template](data);
-    const info = await transporter.sendMail({
-      from: `"Second Striker" <${process.env.EMAIL_USERNAME}>`,
-      to,
+    const { data: responseData, error } = await resend.emails.send({
+      from: 'Second Striker <noreply@secondstriker.com>',
+      to: [to],
       subject: emailContent.subject,
-      html: emailContent.html
+      html: emailContent.html,
     });
-    console.log('Email sent:', info.messageId);
+
+    if (error) {
+      console.error('Error sending email:', error);
+      throw error;
+    }
+
+    console.log('Email sent:', responseData);
     return true;
   } catch (error) {
     console.error('Error sending email:', error);
