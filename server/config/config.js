@@ -17,10 +17,7 @@ const getConfig = (env) => ({
     baseUrl: process.env.MPESA_BASE_URL || 'https://sandbox.safaricom.co.ke', 
   },
   email: {
-    from: process.env.EMAIL_USERNAME,
-    password: process.env.EMAIL_PASSWORD,
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
+    from: process.env.EMAIL_FROM,
   },
   logging: {
     level: process.env.LOG_LEVEL || 'info',

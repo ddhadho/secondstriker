@@ -1,4 +1,5 @@
 const { Resend } = require('resend');
+const config = require('./config');
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -57,7 +58,7 @@ const sendEmail = async (to, template, data = {}) => {
   try {
     const emailContent = emailTemplates[template](data);
     const { data: responseData, error } = await resend.emails.send({
-      from: 'Second Striker <noreply@secondstriker.com>',
+      from: config.email.from,
       to: [to],
       subject: emailContent.subject,
       html: emailContent.html,
