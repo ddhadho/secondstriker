@@ -14,8 +14,6 @@
 
 ##  What This Project Demonstrates
 
-SecondStriker showcases production-grade backend engineering skills:
-
 - **Payment Integration**: M-Pesa Daraja API with webhook-based reconciliation
 - **Financial Transactions**: Idempotent operations, race condition handling, async flows
 - **Microservices Architecture**: Separation of concerns (payments, notifications, business logic)
@@ -28,22 +26,16 @@ This is a **portfolio project** built to demonstrate backend engineering capabil
 
 ## Screenshots
 
-> **Note**: Add 3-4 screenshots here showing:
-> 1. Tournament dashboard
-> 2. Wallet interface (deposit/withdraw)
-> 3. Match results/standings
-> 4. Admin panel (if exists)
-
-### Tournament Dashboard
+### Tournament Details
    ![Dashboard](screenshots/details.png)
    
-   ### Wallet Interface
+   ### Fixtures
    ![Wallet](screenshots/fixtures.png)
    
-   ### Tournament Details
+   ### Tournament Members
    ![Tournament](screenshots/members.png)
    
-   ### Match Results
+   ### Wallet Interface
    ![Feature](screenshots/wallet.jpeg)
 
 ---
@@ -98,7 +90,6 @@ This is a **portfolio project** built to demonstrate backend engineering capabil
 ### Tournament Management
 - Create and manage leagues (round-robin fixtures)
 - Single-elimination tournament brackets
-- Real-time match updates and standings
 - Player and team statistics tracking
 
 ### Wallet System (M-Pesa Integration)
@@ -124,7 +115,6 @@ This is a **portfolio project** built to demonstrate backend engineering capabil
 - **Database**: MongoDB with Mongoose ODM
 - **Authentication**: Passport.js + JWT
 - **Payments**: M-Pesa Daraja API (STK Push + B2C)
-- **Real-time**: WebSockets (Socket.io)
 - **Logging**: Winston
 - **Email**: Resend
 
@@ -266,24 +256,6 @@ POST /api/mpesa/b2c/queue    - B2C timeout callback
 
 Building SecondStriker taught me critical production engineering lessons:
 
----
-
-## Project Status
-
-This project is a **portfolio piece** demonstrating backend and full-stack development skills. It is feature-complete as designed for its portfolio purpose, but not actively maintained for new feature development unless specifically requested or for critical bug fixes.
-
----
-
-## Contributing
-
-As a portfolio project, direct contributions via pull requests are not the primary focus. However, I welcome:
-
--   **Bug Reports**: Please open an issue if you find any bugs.
--   **Feature Suggestions**: Feel free to open an issue to suggest new features or improvements.
--   **Feedback**: Any constructive feedback on the code, architecture, or documentation is highly appreciated!
-
----
-
 ### 1. **Payment System Reliability**
 - Idempotency is non-negotiable for financial transactions
 - Always use database transactions (ACID) for money operations
@@ -313,6 +285,16 @@ As a portfolio project, direct contributions via pull requests are not the prima
 ### 6. **Containerization with Docker**
 - How to use Docker Compose for consistent local development environments.
 - Benefits of containerization for isolation, portability, and simplified setup.
+
+---
+
+## Contributing
+
+Contributions are welcome:
+
+-   **Bug Reports**: Please open an issue if you find any bugs.
+-   **Feature Suggestions**: Feel free to open an issue to suggest new features or improvements.
+-   **Feedback**: Any constructive feedback on the code, architecture, or documentation is highly appreciated!
 
 ---
 
