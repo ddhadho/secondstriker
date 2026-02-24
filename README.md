@@ -1,6 +1,6 @@
 # SecondStriker 
 
-> Full-stack e-sports tournament platform with integrated M-Pesa payments for entry fees and automated prize distribution.
+> Full-stack e-sports tournament management platform with integrated M-Pesa payments for entry fees and automated prize distribution.
 
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://secondstriker.vercel.app)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen)](https://nodejs.org/)
